@@ -1,0 +1,24 @@
+import numpy as np
+from astropy.io import fits 
+import matplotlib.pyplot as plt 
+import astropy.convolution as ac
+
+# Napravi mi psf za datu velicinu pixela
+
+pixel_size = 32.0
+
+D = 1.0 # m 
+llambda = 630E-9 # m 
+
+diff_limit = 1.22 * llambda / D * 206265
+
+diff_limit_km = diff_limit * 725
+
+diff_limit_px = diff_limit_km / pixel_size
+
+print("info::diffraction limit in pixels is: ", diff_limit_px)
+
+psf = ac.AiryDisk2DKernel(diff_limit_px)
+
+kek = fits.PrimaryHDU(psf)
+kek.writeto("psf_1m_binned.fits")
