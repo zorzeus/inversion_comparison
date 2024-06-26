@@ -3,8 +3,6 @@ from astropy.io import fits
 import matplotlib.pyplot as plt 
 import astropy.convolution as ac
 
-# Napravi mi psf za datu velicinu pixela
-
 pixel_size = 32.0
 
 D = 1.0 # m 
