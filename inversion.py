@@ -1,4 +1,8 @@
-# INVERSION
+# BASIC INVERSION METHOD 
+
+#########################################################################
+# code can be of great use for various purposes
+#########################################################################
 
 import MilneEddington as ME
 import numpy as np
@@ -17,11 +21,11 @@ def waveGrid(nw):
 def loadData(clip_threshold = 0.99):
 
     b_c = ut.readFits('binned_and_convolved_stokes.fits')
-    print("info::input file has size: ", b_c.shape)
-    mean_continuum = np.mean(b_c[:,:,0,-10:])
-    b_c /= mean_continuum
+    # print("info::input file has size: ", b_c.shape)
+    # mean_continuum = np.mean(b_c[:,:,0,-10:])
+    # b_c /= mean_continuum
 
-    obs = b_c[:64,:64] 
+    obs = b_c 
     wav = waveGrid(obs.shape[-1])
     print (wav)
  
@@ -31,11 +35,11 @@ def loadData(clip_threshold = 0.99):
 
     psf = ut.readFits('psf_1m_binned.fits')
     
-    return [[wav, None]], [[obs, sig, psf/psf.sum(), clip_threshold]]
+    return [[wav, None]], [[obs, sig, psf, clip_threshold]]
 
 if __name__ == "__main__":
 
-    nthreads = 12 # adapt this number to the number of cores that are available in your machine
+    nthreads = 16 # adapt this number to the number of cores that are available in your machine
     
     # Load data
     region, sregion = loadData()
@@ -52,24 +56,21 @@ if __name__ == "__main__":
     # Invert pixel by pixel
     mpix, syn, chi2 = me.invert(m, sregion[0][0], sregion[0][1], nRandom=20, nIter=50, chi2_thres=0.1, mu=0.96)
     ut.writeFits("modelout_pixel-to-pixel.fits", mpix)
-    # smooth model
-    m = ut.smoothModel(mpix, 4)
 
+# smooth model
+m = ut.smoothModel(mpix, 4)
 
-    # invert spatially-coupled with initial guess from pixel-to-pixel (less iterations)
-    m1, chi = me.invert_spatially_coupled(m, sregion, mu=0.96, nIter=5, alpha=100., \
+# invert spatially-coupled with initial guess from pixel-to-pixel (less iterations)
+m1, chi = me.invert_spatially_coupled(m, sregion, mu=0.96, nIter=5, alpha=100., \
                                     alphas = np.float64([1,1,1,0.01,0.01,0.01,0.01,0.01,0.01]),\
                                     init_lambda=10.0)
 
-    
+# smooth model with very narrow PSF and restart with less regularization (lower alpha)
+m = ut.smoothModel(m1, 2)
 
-    # smooth model with very narrow PSF and restart with less regularization (lower alpha)
-    #m = ut.smoothModel(m1, 2)
-
+# invert spatially-coupled 
+m1, chi = me.invert_spatially_coupled(m, sregion, mu=0.96, nIter=20, alpha=10., \
+                                         alphas = np.float64([2,2,2,0.01,0.01,0.01,0.01,0.01,0.01]),\
+                                         init_lambda=1.0)
     
-    # invert spatially-coupled 
-    #m1, chi = me.invert_spatially_coupled(m, sregion, mu=0.96, nIter=20, alpha=10., \
-    #                                     alphas = np.float64([2,2,2,0.01,0.01,0.01,0.01,0.01,0.01]),\
-    #                                     init_lambda=1.0)
-    
-    ut.writeFits("modelout_spatially_coupled.fits", m1)
+ut.writeFits("modelout_spatially_coupled.fits", m1)
