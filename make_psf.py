@@ -1,3 +1,5 @@
+# MAKE PSF
+
 import numpy as np
 from astropy.io import fits 
 import matplotlib.pyplot as plt 
@@ -18,5 +20,5 @@ print("info::diffraction limit in pixels is: ", diff_limit_px)
 
 psf = ac.AiryDisk2DKernel(diff_limit_px)
 
-kek = fits.PrimaryHDU(psf)
-kek.writeto("psf_1m_binned.fits")
+file = fits.PrimaryHDU(psf)
+file.writeto("psf_1m_binned.fits")
